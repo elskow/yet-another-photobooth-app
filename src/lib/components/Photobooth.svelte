@@ -330,17 +330,59 @@
 		const context = canvasElement.getContext('2d');
 		if (!context) return;
 
-		canvasElement.width = videoElement.videoWidth;
-		canvasElement.height = videoElement.videoHeight;
+		const [targetWidth, targetHeight] = selectedTemplate.aspectRatio.split(':').map(Number);
+		const aspectRatio = targetWidth / targetHeight;
+
+		const videoWidth = videoElement.videoWidth;
+		const videoHeight = videoElement.videoHeight;
+		const videoAspectRatio = videoWidth / videoHeight;
+
+		let sourceX = 0;
+		let sourceY = 0;
+		let sourceWidth = videoWidth;
+		let sourceHeight = videoHeight;
+
+		if (videoAspectRatio > aspectRatio) {
+			sourceWidth = videoHeight * aspectRatio;
+			sourceX = (videoWidth - sourceWidth) / 2;
+		} else if (videoAspectRatio < aspectRatio) {
+			sourceHeight = videoWidth / aspectRatio;
+			sourceY = (videoHeight - sourceHeight) / 2;
+		}
+
+		const outputWidth = Math.round(sourceWidth);
+		const outputHeight = Math.round(sourceHeight);
+		canvasElement.width = outputWidth;
+		canvasElement.height = outputHeight;
 
 		if (isCameraFlipped) {
 			context.save();
 			context.translate(canvasElement.width, 0);
 			context.scale(-1, 1);
-			context.drawImage(videoElement, 0, 0);
+			context.drawImage(
+				videoElement,
+				sourceX,
+				sourceY,
+				sourceWidth,
+				sourceHeight,
+				0,
+				0,
+				outputWidth,
+				outputHeight
+			);
 			context.restore();
 		} else {
-			context.drawImage(videoElement, 0, 0);
+			context.drawImage(
+				videoElement,
+				sourceX,
+				sourceY,
+				sourceWidth,
+				sourceHeight,
+				0,
+				0,
+				outputWidth,
+				outputHeight
+			);
 		}
 
 		const photoDataUrl = canvasElement.toDataURL('image/jpeg');
